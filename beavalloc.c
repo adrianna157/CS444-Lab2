@@ -7,7 +7,8 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <string.h>
-
+#include <errno.h>
+//
 
 void reset(void);
 
@@ -26,7 +27,7 @@ typedef struct mem_block_s {
 
 static mem_block_t *block_list_head = NULL;
 
-static void *lower_mem_bound = NULL;
+static void *lower_mem_bound =  0x0;
 static void *upper_mem_bound = NULL;
 
 static uint8_t isVerbose = FALSE;
@@ -35,7 +36,7 @@ static FILE *beavalloc_log_stream = NULL;
 // This is some gcc magic.
 static void init_streams(void) __attribute__((constructor));
 
-void *low_water = 0x0;
+
 
 //
 static void 
@@ -59,14 +60,40 @@ beavalloc_set_log(FILE *stream)
     beavalloc_log_stream = stream;
 }
 
+
+// The basic memory allocator.
+// If you pass NULL or 0, then NULL is returned.
+// If, for some reason, the system cannot allocate the requested
+//   memory, set errno and return NULL.
+// When you call sbrk(), request a multiple of 1024 bytes. You should
+//   use the smallest multiple of 1024 bytes that will satisfy the
+//   the users request.
+// You must use sbrk() or brk() in requesting more memory for your
+//   beavalloc() routine to manage.
+
 void *
 beavalloc(size_t size)
 {
     void *ptr = NULL;
 
-    // your code goes here
+    if(size == NULL || 0)
+    {
+        return NULL;
+    }
+    if(ptr == NULL){
+        errno = ENOENT;
+        return NULL;
+    }
+    else
+    {
 
+        size = sbrk(1024);
+        ptr = size;
+    }
+    
     return ptr;
+    
+
 }
 
 void 
@@ -82,8 +109,18 @@ beavfree(void *ptr)
 void 
 beavalloc_reset(void)
 {
+    // The commented code is what I used to test this function
+    // void *base = 0x20a5000;
+    // printf("top of heap before reset:               %10p\n", base);
     //sets highwater back to the very bottom where low_water mark is, which is 0
-    brk(low_water);
+   
+    // base = brk(low_water);
+
+    
+    //sets highwater back to the very bottom where low_water mark is, which is 0
+    brk(lower_mem_bound);
+
+    // printf("top of heap after reset:                %10p\n", base);
     
 }
 
