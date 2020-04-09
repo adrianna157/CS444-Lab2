@@ -40,3 +40,7 @@ clean cls:
 ci:
 	if [ ! -d RCS ] ; then mkdir RCS; fi
 	ci -t-none -m"crazy-checkin" -l *.[ch] ?akefile
+DIR = $(shell basename $(PWD))
+teach: 
+	make clean
+	cd .. ; tar --exclude-backups --exclude-vcs -c -a -f ./${LOGNAME}-$(DIR)-xv6.tar.gz $(DIR)	
